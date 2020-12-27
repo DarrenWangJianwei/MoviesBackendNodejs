@@ -17,9 +17,10 @@ router.post("/", auth, async (req, res) => {
   let customer = new Customer({
     name: req.body.name,
     isGold: req.body.isGold,
-    phone: req.body.phone
+    phone: req.body.phone,
+    user: req.body.userId
   });
-  customer = await customer.save();
+  //customer = await customer.save();
 
   res.send(customer);
 });
@@ -27,39 +28,36 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
-
-  const customer = await Customer.findByIdAndUpdate(
-    req.params.id,
-    {
-      name: req.body.name,
-      isGold: req.body.isGold,
-      phone: req.body.phone
-    },
-    { new: true }
-  );
-
+  const customer = await Customer.findOne({user:req.params.id}).select("-__v -user -_id");
+  
   if (!customer)
-    return res
-      .status(404)
-      .send("The customer with the given ID was not found.");
+  return res
+    .status(404)
+    .send("The customer with the given ID was not found.");
 
-  res.send(customer);
+  customer.name = req.body.name;
+  customer.isGold = req.body.isGold;
+  customer.phone = req.body.phone;
+
+  const result = await customer.save();
+
+  res.send(result);
 });
 
-router.delete("/:id", auth, async (req, res) => {
-  const customer = await Customer.findByIdAndRemove(req.params.id);
+// router.delete("/:id", auth, async (req, res) => {
+//   const customer = await Customer.findOne(req.params.id);
 
-  if (!customer)
-    return res
-      .status(404)
-      .send("The customer with the given ID was not found.");
+//   if (!customer)
+//     return res
+//       .status(404)
+//       .send("The customer with the given ID was not found.");
 
-  res.send(customer);
-});
+//   customer.remove();
+//   res.send(customer);
+// });
 
 router.get("/:id", auth, async (req, res) => {
-  const customer = await Customer.findById(req.params.id).select("-__v");
-
+  const customer = await Customer.findOne({user:req.params.id}).select("-__v");
   if (!customer)
     return res
       .status(404)
@@ -67,5 +65,6 @@ router.get("/:id", auth, async (req, res) => {
 
   res.send(customer);
 });
+
 
 module.exports = router;
