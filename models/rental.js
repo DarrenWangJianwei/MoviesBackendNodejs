@@ -53,7 +53,7 @@ rentalSchema.statics.lookup = function(customerId, movieId, user) {
 
 const Rental = mongoose.model('Rental', rentalSchema);
 
-function validateRental(rental) {
+function validateRentalByUserAndMovie(rental) {
   const schema = {
     userId: Joi.objectId().required(),
     movieId: Joi.objectId().required()
@@ -62,5 +62,13 @@ function validateRental(rental) {
   return Joi.validate(rental, schema);
 }
 
+function validateRentalByRentalId(rental) {
+  const schema = {
+    rentalId: Joi.objectId().required(),
+  };
+
+  return Joi.validate(rental, schema);
+}
 exports.Rental = Rental; 
-exports.validate = validateRental;
+exports.validateRentalByUserAndMovie = validateRentalByUserAndMovie;
+exports.validateRentalByRentalId = validateRentalByRentalId;
