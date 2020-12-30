@@ -1,10 +1,16 @@
-const { Customer, validate } = require("../models/customer");
+const _ = require('lodash');
+const mongoose = require('mongoose');
+const { User } = require("../models/user");
+const { Customer, validate} = require("../models/customer");
+
 const auth = require("../middleware/auth");
 const express = require("express");
+const { update } = require('lodash');
 const router = express.Router();
 
 router.get("/", auth, async (req, res) => {
   const customers = await Customer.find()
+    .populate("user")
     .select("-__v")
     .sort("name");
   res.send(customers);
@@ -26,7 +32,6 @@ router.post("/", auth, async (req, res) => {
 });
 
 router.put("/:id", auth, async (req, res) => {
-  console.log('req.body',req.body)
   const { error } = validate(req.body);
 
   if (error) return res.status(400).send(error.details[0].message);
@@ -51,17 +56,37 @@ router.put("/:id", auth, async (req, res) => {
   res.send(result);
 });
 
-// router.delete("/:id", auth, async (req, res) => {
-//   const customer = await Customer.findOne(req.params.id);
+router.post("/change", auth, async (req, res) => {
+  const {removed} = req.body;
+  const ids_customer = _.map(removed,'_id');
+  const ids_user = _.map(removed,'user._id')
 
-//   if (!customer)
-//     return res
-//       .status(404)
-//       .send("The customer with the given ID was not found.");
+  const {changed} = req.body;
+  const bulkOps = changed.map(c=>({
+    updateOne:{
+      filter:{_id: mongoose.Types.ObjectId(c._id)},
+      update:{$set: {isGold: c.isGold}},
+      upsert: true
+    }
+  }));
 
-//   customer.remove();
-//   res.send(customer);
-// });
+  const session = await mongoose.startSession();
+  try{
+    session.startTransaction();
+
+    const doc = await Customer.collection.bulkWrite(bulkOps)
+    const doc1 = await Customer.deleteMany({_id:{$in:ids_customer}}).session(session);
+    const doc2 = await User.deleteMany({_id:{$in:ids_user}}).session(session);
+    await session.commitTransaction();
+    
+    res.send([doc,doc1,doc2]);
+  }catch(err){
+    console.log("transaction failed!!");
+    res.status(404).send("Transaction failed! unable to update or delete customers");
+  }finally{
+    await session.endSession();
+  }
+});
 
 router.get("/:id", auth, async (req, res) => {
   const customer = await Customer.findOne({user:req.params.id}).select("-__v");

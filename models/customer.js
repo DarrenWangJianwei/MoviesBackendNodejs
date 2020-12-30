@@ -41,20 +41,19 @@ const Customer = mongoose.model('Customer', new mongoose.Schema({
 
 function validateCustomer(customer) {
   const schema = {
-    name: Joi.string().default(""),
-    phone: Joi.string().default(""),
-    email: Joi.string().default(""),
-    address: Joi.string().default(""),
-    city: Joi.string().default(""),
-    province: Joi.string().default(""),
-    zip: Joi.string().default(""),
-    isGold: Joi.boolean().default(false),
+    name: Joi.string().allow('', null).default(""),
+    phone: Joi.string().allow('', null).default(""),
+    email: Joi.string().allow('', null).default(""),
+    address: Joi.string().allow('', null).default(""),
+    city: Joi.string().allow('', null).default(""),
+    province: Joi.string().allow('', null).default(""),
+    zip: Joi.string().allow('', null).default(""),
+    isGold: Joi.boolean().allow('', null).default(false),
     user: Joi.string().required(),
-    _id: Joi.string()
+    _id: Joi.string().allow('', null).default("")
   };
 
   return Joi.validate(customer, schema);
 }
-
 exports.Customer = Customer; 
 exports.validate = validateCustomer;
