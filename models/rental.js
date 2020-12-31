@@ -19,6 +19,7 @@ const rentalSchema = new mongoose.Schema({
     }),  
     required: true
   },
+
   movie: {
     type: new mongoose.Schema({
       title: {
@@ -37,6 +38,7 @@ const rentalSchema = new mongoose.Schema({
     }),
     required: true
   },
+
   rentalFee: { 
     type: Number, 
     min: 0
@@ -69,6 +71,7 @@ function validateRentalByRentalId(rental) {
 
   return Joi.validate(rental, schema);
 }
+
 exports.Rental = Rental; 
 exports.validateRentalByUserAndMovie = validateRentalByUserAndMovie;
 exports.validateRentalByRentalId = validateRentalByRentalId;

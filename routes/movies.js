@@ -1,11 +1,10 @@
-const { Movie, validate } = require("../models/movie");
-const { Genre } = require("../models/genre");
+const express = require("express");
+const moment = require("moment");
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 const validateObjectId = require("../middleware/validateObjectId");
-const moment = require("moment");
-const mongoose = require("mongoose");
-const express = require("express");
+const { Movie, validate } = require("../models/movie");
+const { Genre } = require("../models/genre");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -32,6 +31,7 @@ router.post("/", [auth], async (req, res) => {
     dailyRentalRate: req.body.dailyRentalRate,
     publishDate: moment().toJSON()
   });
+  
   await movie.save();
 
   res.send(movie);

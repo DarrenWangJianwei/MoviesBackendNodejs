@@ -1,11 +1,9 @@
+const express = require("express");
 const _ = require('lodash');
+const auth = require("../middleware/auth");
 const mongoose = require('mongoose');
 const { User } = require("../models/user");
 const { Customer, validate} = require("../models/customer");
-
-const auth = require("../middleware/auth");
-const express = require("express");
-const { update } = require('lodash');
 const router = express.Router();
 
 router.get("/", auth, async (req, res) => {
@@ -26,7 +24,8 @@ router.post("/", auth, async (req, res) => {
     phone: req.body.phone,
     user: req.body.user
   });
-  //customer = await customer.save();
+
+  customer = await customer.save();
 
   res.send(customer);
 });
@@ -81,7 +80,6 @@ router.post("/change", auth, async (req, res) => {
     
     res.send([doc,doc1,doc2]);
   }catch(err){
-    console.log("transaction failed!!");
     res.status(404).send("Transaction failed! unable to update or delete customers");
   }finally{
     await session.endSession();
@@ -97,6 +95,5 @@ router.get("/:id", auth, async (req, res) => {
 
   res.send(customer);
 });
-
 
 module.exports = router;

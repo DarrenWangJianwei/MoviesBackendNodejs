@@ -1,9 +1,9 @@
+const express = require("express");
 const Joi = require("joi");
 const validate = require("../middleware/validate");
+const auth = require("../middleware/auth");
 const { Rental } = require("../models/rental");
 const { Movie } = require("../models/movie");
-const auth = require("../middleware/auth");
-const express = require("express");
 const router = express.Router();
 
 router.post("/", [auth, validate(validateReturn)], async (req, res) => {
@@ -23,7 +23,6 @@ router.post("/", [auth, validate(validateReturn)], async (req, res) => {
       $inc: { numberInStock: 1 }
     }
   );
-
   return res.send(rental);
 });
 
@@ -32,7 +31,6 @@ function validateReturn(req) {
     customerId: Joi.objectId().required(),
     movieId: Joi.objectId().required()
   };
-
   return Joi.validate(req, schema);
 }
 

@@ -1,16 +1,13 @@
+const express = require("express");
+const Fawn = require("fawn");
+const auth = require("../middleware/auth");
 const { Rental, validateRentalByUserAndMovie,validateRentalByRentalId } = require("../models/rental");
 const { Movie } = require("../models/movie");
 const { Customer } = require("../models/customer");
-const auth = require("../middleware/auth");
-const Fawn = require("fawn");
-const express = require("express");
 const router = express.Router();
 
-
 router.get("/", auth, async (req, res) => {
-  const rentals = await Rental.find()
-    .select("-__v")
-
+  const rentals = await Rental.find().select("-__v")
   res.send(rentals);
 });
 
@@ -109,7 +106,6 @@ router.delete("/:rentalId", auth, async (req, res) => {
     res.status(500).send("Something failed. "+ex);
   }
 });
-
 
 router.get("/:id", [auth], async (req, res) => {
   const rental = await Rental.find({'customer.user':req.params.id}).select("-__v");
