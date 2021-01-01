@@ -39,7 +39,7 @@ router.post("/", async (req, res) => {
         .header("access-control-expose-headers","x-auth-token")
         .send(_.pick(user, ["_id", "name", "email"]));
     }).catch(function(err){
-      res.status(500).send("Something failed.");
+      res.status(500).send("System Error, Transaction.");
     })
 });
 

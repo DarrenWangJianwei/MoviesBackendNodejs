@@ -49,7 +49,7 @@ router.post("/", auth, async (req, res) => {
       .run();
     res.send(rental);
   } catch (ex) {
-    res.status(500).send("Something failed.");
+    res.status(500).send("System Error, Transaction."+ex);
   }
 });
 
@@ -76,7 +76,7 @@ router.delete("/:userId/:movieId", auth, async (req, res) => {
       .run();
     res.send(rental);
   } catch (ex) {
-    res.status(500).send("Something failed. "+ex);
+    res.status(500).send("System Error, Transaction. "+ex);
   }
 });
 
@@ -103,7 +103,7 @@ router.delete("/:rentalId", auth, async (req, res) => {
       .run();
     res.send(rental);
   } catch (ex) {
-    res.status(500).send("Something failed. "+ex);
+    res.status(500).send("System Error, Transaction. "+ex);
   }
 });
 
