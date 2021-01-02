@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "seed": "node seed.js",
-    "test": "jest --watchAll --verbose --coverage"
+    "test": "jest --verbose --coverage --forceExit --maxWorkers=1"
   },
   "keywords": [],
   "author": "",
