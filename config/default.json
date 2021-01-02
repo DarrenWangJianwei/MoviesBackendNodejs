@@ -2,5 +2,5 @@
   "jwtPrivateKey": "unsecureKey",
   "db": "mongodb://LAPTOP-GTOJRBT7:27017,LAPTOP-GTOJRBT7:27018,LAPTOP-GTOJRBT7:27019/vidly?replicaSet=rs",
   "port": "3900",
-  "requiresAuth": false
+  "requiresAuth": true
 }

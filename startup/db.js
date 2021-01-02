@@ -10,5 +10,5 @@ module.exports = function() {
     keepAlive: true,
     reconnectTries: 30
   })
-    .then(() => winston.info(`Connected to ${db}...`));
+    .then(() => {winston.info(`Connected to ${db}...`)});
 }

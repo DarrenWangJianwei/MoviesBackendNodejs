@@ -1,4 +1,6 @@
 {
-  "jwtPrivateKey": "1234",
-  "db": "mongodb://localhost/vidly_tests"
+  "jwtPrivateKey": "unsecureKey",
+  "db": "mongodb://LAPTOP-GTOJRBT7:27017,LAPTOP-GTOJRBT7:27018,LAPTOP-GTOJRBT7:27019/vidly_test?replicaSet=rs",
+  "port": "3900",
+  "requiresAuth": true
 }
