@@ -3,8 +3,6 @@ const { Movie } = require("./models/movie");
 const { User } = require("./models/user");
 const { Customer } = require("./models/customer");
 const { Rental } = require("./models/rental");
-const mongoose = require("mongoose");
-const config = require("config");
 
 const data = [
   {
@@ -48,9 +46,11 @@ const data = [
 
   const rentals = Array(10);
 
-async function seed() {
-  await mongoose.connect(config.get("db"));
+function rentalsSize(){
+  return rentals.length;
+}
 
+async function seed() {
   await Movie.deleteMany({});
   await Genre.deleteMany({});
   await User.deleteMany({});
@@ -60,7 +60,9 @@ async function seed() {
   for (let genre of data) {
     const { _id: genreId } = await new Genre({ name: genre.name }).save();
     const movies = genre.movies.map(movie => ({
-      ...movie,
+      title: movie.title,
+      numberInStock: movie.numberInStock,
+      dailyRentalRate: movie.dailyRentalRate,
       genre: { _id: genreId, name: genre.name }
     }));
     await Movie.insertMany(movies);
@@ -92,10 +94,7 @@ async function seed() {
       }
     }).save();
   }
-
-  mongoose.disconnect();
-
-  console.info("Done!");
 }
 
-seed();
+exports.seed = seed; 
+exports.rentalsSize = rentalsSize;
