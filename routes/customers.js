@@ -1,13 +1,14 @@
 const express = require("express");
 const _ = require('lodash');
+const mongoose = require('mongoose');
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
-const mongoose = require('mongoose');
+const validateObjectId = require("../middleware/validateObjectId");
 const { User } = require("../models/user");
 const { Customer, validate} = require("../models/customer");
 const router = express.Router();
 
-router.get("/", auth, async (req, res) => {
+router.get("/", [auth,admin], async (req, res) => {
   const customers = await Customer.find()
     .populate("user")
     .select("-__v")
@@ -15,23 +16,7 @@ router.get("/", auth, async (req, res) => {
   res.send(customers);
 });
 
-router.post("/", auth, async (req, res) => {
-  const { error } = validate(req.body);
-  if (error) return res.status(400).send(error.details[0].message);
-
-  let customer = new Customer({
-    name: req.body.name,
-    isGold: req.body.isGold,
-    phone: req.body.phone,
-    user: req.body.user
-  });
-
-  customer = await customer.save();
-
-  res.send(customer);
-});
-
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", [auth,validateObjectId], async (req, res) => {
   const { error } = validate(req.body);
 
   if (error) return res.status(400).send(error.details[0].message);
@@ -62,32 +47,43 @@ router.post("/change", [auth, admin], async (req, res) => {
   const ids_user = _.map(removed,'user._id')
 
   const {changed} = req.body;
-  const bulkOps = changed.map(c=>({
-    updateOne:{
-      filter:{_id: mongoose.Types.ObjectId(c._id)},
-      update:{$set: {isGold: c.isGold}},
-      upsert: true
-    }
-  }));
 
   const session = await mongoose.startSession();
+  var bulk = Customer.collection.initializeUnorderedBulkOp();
+  changed.map(c=>{
+    if(mongoose.Types.ObjectId.isValid(c._id))
+      bulk.find({_id:mongoose.Types.ObjectId(c._id)}).updateOne( { $set: {isGold:c.isGold} } );
+  })
+
   try{
     session.startTransaction();
 
-    const doc = await Customer.collection.bulkWrite(bulkOps)
+    const doc = await bulk.execute(null,{session});
+    if(doc.result.nModified !== changed.length){
+      throw new Error("Can not update all of customers, transaction rollback!");
+    }
+
     const doc1 = await Customer.deleteMany({_id:{$in:ids_customer}}).session(session);
+    if(doc1.deletedCount !== removed.length){
+      throw new Error("Can not delete all of customers, transaction rollback!");
+    }
+
     const doc2 = await User.deleteMany({_id:{$in:ids_user}}).session(session);
-    await session.commitTransaction();
+    if(doc2.deletedCount !== removed.length){
+      throw new Error("Can not delete all of users, transaction rollback!");
+    }
     
+    await session.commitTransaction();
     res.send([doc,doc1,doc2]);
   }catch(err){
-    res.status(500).send("System Error, Transaction");
+    res.status(500).send(err);
+    await session.abortTransaction();
   }finally{
     await session.endSession();
   }
 });
 
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", [auth,validateObjectId], async (req, res) => {
   const customer = await Customer.findOne({user:req.params.id}).select("-__v");
   if (!customer)
     return res
