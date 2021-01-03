@@ -1,12 +1,15 @@
 const express = require("express");
 const Fawn = require("fawn");
 const auth = require("../middleware/auth");
-const { Rental, validateRentalByUserAndMovie,validateRentalByRentalId } = require("../models/rental");
+const admin = require("../middleware/admin");
+const isValidObjectId = require("../middleware/validateObjectId")
+const isValidObjectIds = require("../middleware/validateObjectIds")
+const { Rental, validateRentalByUserAndMovie } = require("../models/rental");
 const { Movie } = require("../models/movie");
 const { Customer } = require("../models/customer");
 const router = express.Router();
 
-router.get("/", auth, async (req, res) => {
+router.get("/", [auth,admin], async (req, res) => {
   const rentals = await Rental.find().select("-__v")
   res.send(rentals);
 });
@@ -35,83 +38,71 @@ router.post("/", auth, async (req, res) => {
       dailyRentalRate: movie.dailyRentalRate
     }
   });
-
-  try {
-    new Fawn.Task()
-      .save("rentals", rental)
-      .update(
-        "movies",
-        { _id: movie._id },
-        {
-          $inc: { numberInStock: -1 }
-        }
-      )
-      .run();
-    res.send(rental);
-  } catch (ex) {
-    res.status(500).send("System Error, Transaction."+ex);
-  }
+  new Fawn.Task()
+          .save("rentals", rental)
+          .update("movies",{ _id: movie._id },{$inc: { numberInStock: -1 }})
+          .run()
+          .then(function(result){
+            res.send(rental);
+          }).catch(function(err){
+            res.status(500).send("System Error, Transaction. "+err);
+          })
 });
 
-router.delete("/:userId/:movieId", auth, async (req, res) => {
-  const { error } = validateRentalByUserAndMovie(req.params);
-  if (error) return res.status(400).send(error.details[0].message);
-
+router.delete("/:userId/:movieId", [auth,isValidObjectIds] , async (req, res) => {
   const rental = await Rental.findOne({'customer.user':req.params.userId,'movie._id':req.params.movieId});
   if (!rental) return res.status(400).send("You don't have this movie");
 
   const movie = await Movie.findById(req.params.movieId);
   if (!movie) return res.status(400).send("Invalid movie.");
 
-  try {
-    new Fawn.Task()
-      .remove("rentals", {_id:rental._id})
-      .update(
-        "movies",
-        { _id: movie._id },
-        {
-          $inc: { numberInStock: +1 }
-        }
-      )
-      .run();
-    res.send(rental);
-  } catch (ex) {
-    res.status(500).send("System Error, Transaction. "+ex);
-  }
+  new Fawn.Task()
+    .remove("rentals", {_id:rental._id})
+    .update(
+      "movies",
+      { _id: movie._id },
+      {
+        $inc: { numberInStock: +1 }
+      }
+    )
+    .run()
+    .then(function(result){
+      res.send(rental);
+    }).catch(function(err){
+      res.status(500).send("System Error, Transaction. "+err);
+    })
 });
 
-router.delete("/:rentalId", auth, async (req, res) => {
-  const { error } = validateRentalByRentalId(req.params);
-  if (error) return res.status(400).send(error.details[0].message);
-
+router.delete("/:rentalId", [auth,isValidObjectIds], async (req, res) => {
   const rental = await Rental.findById(req.params.rentalId);
-  if (!rental) return res.status(404).send("can not find this rental id");
+  if (!rental) return res.status(400).send("can not find this rental id");
 
   const movie = await Movie.findById(rental.movie._id);
-  if (!movie) return res.status(400).send("can not find this rental movie id.");
+  if (!movie) return res.status(400).send("can not find this movie id.");
 
-  try {
-    new Fawn.Task()
-      .remove("rentals", {_id:rental._id})
-      .update(
-        "movies",
-        { _id: movie._id },
-        {
-          $inc: { numberInStock: +1 }
-        }
-      )
-      .run();
-    res.send(rental);
-  } catch (ex) {
-    res.status(500).send("System Error, Transaction. "+ex);
-  }
+
+  new Fawn.Task()
+    .remove("rentals", {_id:rental._id})
+    .update(
+      "movies",
+      { _id: movie._id },
+      {
+        $inc: { numberInStock: +1 }
+      }
+    )
+    .run()
+    .then(function(result){
+      res.send(rental);
+    }).catch(function(err){
+      res.status(500).send("System Error, Transaction. "+err);
+    })
 });
 
-router.get("/:id", [auth], async (req, res) => {
+router.get("/:id", [auth,isValidObjectId], async (req, res) => {
   const rental = await Rental.find({'customer.user':req.params.id}).select("-__v");
 
-  if (!rental)
-    return res.status(404).send("The rental with the given ID was not found.");
+  if (!rental || rental.length === 0)
+    return res.status(404).send("This user does not have any rentals.");
 
   res.send(rental);
 });

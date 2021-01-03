@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const {Customer} = require('../../models/customer')
 const {User} = require('../../models/user');
 
+let server;
+
 describe('/api/customers', () => {
     beforeEach(() => { server = require('../../index'); })
     

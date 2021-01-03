@@ -64,14 +64,5 @@ function validateRentalByUserAndMovie(rental) {
   return Joi.validate(rental, schema);
 }
 
-function validateRentalByRentalId(rental) {
-  const schema = {
-    rentalId: Joi.objectId().required(),
-  };
-
-  return Joi.validate(rental, schema);
-}
-
 exports.Rental = Rental; 
 exports.validateRentalByUserAndMovie = validateRentalByUserAndMovie;
-exports.validateRentalByRentalId = validateRentalByRentalId;
